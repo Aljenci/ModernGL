@@ -29,7 +29,7 @@ PyObject * NewVertexArray(PyObject * self, PyObject * args, PyObject * kwargs) {
 		}
 	}
 
-	int count = (int)PyList_Size(attributes);
+	int num_attributes = (int)PyList_Size(attributes);
 
 	FormatIterator it = FormatIterator(format);
 	FormatInfo info = it.info();
@@ -39,8 +39,8 @@ PyObject * NewVertexArray(PyObject * self, PyObject * args, PyObject * kwargs) {
 		return 0;
 	}
 
-	if (info.nodes != count) {
-		PyErr_Format(ModuleInvalidFormat, "NewVertexArray() format has %d nodes but there are %d attributes", info.nodes, count);
+	if (info.nodes != num_attributes) {
+		PyErr_Format(ModuleInvalidFormat, "NewVertexArray() format has %d nodes but there are %d attributes", info.nodes, num_attributes);
 		return 0;
 	}
 
@@ -134,22 +134,114 @@ PyObject * NewVertexArray(PyObject * self, PyObject * args, PyObject * kwargs) {
 }
 
 PyObject * NewAdvancedVertexArray(PyObject * self, PyObject * args, PyObject * kwargs) {
-	PyErr_SetString(ModuleError, "Not implemented");
-	return 0;
-
 	Program * program;
-	PyObject * content;
+	PyObject * items;
 
 	IndexBuffer * no_ibo = (IndexBuffer *)Py_None;
 	IndexBuffer * ibo = no_ibo;
 
-	static const char * kwlist[] = {"program", "content", "ibo", 0};
+	static const char * kwlist[] = {"program", "vbo", "format", "attributes", "ibo", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!|O!:NewAdvancedVertexArray", (char **)kwargs, &ProgramType, &program, &PyList_Type, &content, &IndexBufferType, &ibo)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!sO!|O:NewAdvancedVertexArray", (char **)kwlist, &ProgramType, &program, &PyList_Type, &content, &ibo)) {
 		return 0;
 	}
 
-	// TODO: upgrade
+	if (ibo != no_ibo) {
+		if (!PyObject_TypeCheck((PyObject *)ibo, &IndexBufferType)) {
+			PyErr_Format(PyExc_TypeError, "NewVertexArray() ibo must be IndexBufferType not %s", GET_OBJECT_TYPENAME(ibo));
+			return 0;
+		}
+	}
+
+	int num_items = (int)PyList_Size(items);
+
+	for (int k = 0; k < num_items; ++k) {
+		PyObject * item = PyList_GET_ITEM(items, k);
+		if (PyTuple_GetSize(item) != 3) {
+			PyErr_Format(ModuleError, "ERR: 1");
+			return 0;
+		}
+		VertexBuffer * vbo = (VertexBuffer *)PyTuple_GET_ITEM(item, 0);
+		const char * format = ... PyTuple_GET_ITEM(item, 1);
+		PyObject * attributes = PyTuple_GET_ITEM(item, 2);
+
+		int num_attributes = (int)PyList_Size(attributes);
+
+		FormatIterator it = FormatIterator(format);
+		FormatInfo info = it.info();
+
+		if (!info.valid) {
+			PyErr_Format(ModuleInvalidFormat, "NewVertexArray() format[%d] is invalid", -1);
+			return 0;
+		}
+
+		if (info.nodes != num_attributes) {
+			PyErr_Format(ModuleInvalidFormat, "NewVertexArray() format[%d] has %d nodes but there are %d attributes", -1, info.nodes, num_attributes);
+			return 0;
+		}
+
+		FormatIterator cit = FormatIterator(format);
+		for (int i = 0; i < num_attributes; ++i) {
+			const char * name = PyUnicode_AsUTF8(PyList_GET_ITEM(attributes, i));
+			int location = OpenGL::glGetAttribLocation(program->program, name);
+
+			FormatNode * node = cit.next();
+			while (!node->type) {
+				node = cit.next();
+			}
+		
+			if (location < 0) {
+				PyErr_Format(ModuleAttributeNotFound, "NewVertexArray() attribute `%s` not found", name);
+				return 0;
+			}
+
+			int size = 0;
+			unsigned type = 0;
+			OpenGL::glGetActiveAttrib(program->program, location, 0, 0, &size, &type, 0);
+
+			switch (type) {
+				case OpenGL::GL_INT:
+				case OpenGL::GL_FLOAT:
+				case OpenGL::GL_DOUBLE:
+					if (node->count != 1) {
+						PyErr_Format(ModuleAttributeNotFound, "NewVertexArray() attribute `%s` dimension mismatch %d != 1", name, node->count);
+						return 0;
+					}
+					break;
+
+				case OpenGL::GL_INT_VEC2:
+				case OpenGL::GL_FLOAT_VEC2:
+				case OpenGL::GL_DOUBLE_VEC2:
+					if (node->count != 2) {
+						PyErr_Format(ModuleAttributeNotFound, "NewVertexArray() attribute `%s` dimension mismatch %d != 2", name, node->count);
+						return 0;
+					}
+					break;
+
+				case OpenGL::GL_INT_VEC3:
+				case OpenGL::GL_FLOAT_VEC3:
+				case OpenGL::GL_DOUBLE_VEC3:
+					if (node->count != 3) {
+						PyErr_Format(ModuleAttributeNotFound, "NewVertexArray() attribute `%s` dimension mismatch %d != 3", name, node->count);
+						return 0;
+					}
+					break;
+
+				case OpenGL::GL_INT_VEC4:
+				case OpenGL::GL_FLOAT_VEC4:
+				case OpenGL::GL_DOUBLE_VEC4:
+					if (node->count != 4) {
+						PyErr_Format(ModuleAttributeNotFound, "NewVertexArray() attribute `%s` dimension mismatch %d != 4", name, node->count);
+						return 0;
+					}
+					break;
+
+				default:
+					PyErr_Format(ModuleAttributeNotFound, "NewVertexArray() attribute `%s` unsupported type", name);
+					return 0;
+			}
+		}
+	}
 
 	int vao = 0;
 	OpenGL::glGenVertexArrays(1, (OpenGL::GLuint *)&vao);
@@ -159,78 +251,19 @@ PyObject * NewAdvancedVertexArray(PyObject * self, PyObject * args, PyObject * k
 		OpenGL::glBindBuffer(OpenGL::GL_ELEMENT_ARRAY_BUFFER, ibo->ibo);
 	}
 
-	int size = PyList_Size(content);
-	for (int k = 0; k < size; ++k) {
-		PyObject * tuple = PyList_GET_ITEM(content, k);
-		CHECK_AND_REPORT_ELEMENT_TYPE_ERROR("content", tuple, PyTuple_Type, k);
-		if (PyTuple_Size(tuple) != 3) {
-			PyErr_Format(PyExc_TypeError, "NewAdvancedVertexArray() fail");
-			return 0;
-		}
+	OpenGL::glBindBuffer(OpenGL::GL_ARRAY_BUFFER, vbo->vbo);
 
-		VertexBuffer * vbo = (VertexBuffer *)PyTuple_GET_ITEM(tuple, 0);
-		const char * format = PyUnicode_AsUTF8(PyTuple_GET_ITEM(tuple, 1));
-		PyObject * attributes = PyTuple_GET_ITEM(tuple, 2);
-
-		if (!CHECK_TYPE_ERROR(vbo, VertexBufferType)) {
-			PyErr_Format(PyExc_TypeError, "NewAdvancedVertexArray() fail");
-			return 0;
-		}
-
-		if (!CHECK_TYPE_ERROR(attributes, PyList_Type)) {
-			PyErr_Format(PyExc_TypeError, "NewAdvancedVertexArray() fail");
-			return 0;
-		}
-
-		int length = 0;
-		while (format[length]) {
-			if (length % 2 == 0) {
-				if (format[length] < '1' || format[length] > '4') {
-					PyErr_SetString(ModuleInvalidFormat, "NewAdvancedVertexArray() ERR 3");
-					return 0;
-				}
-			} else {
-				if (format[length] != 'i' && format[length] != 'f') {
-					PyErr_SetString(ModuleInvalidFormat, "NewAdvancedVertexArray() ERR 3");
-					return 0;
-				}
-			}
-			++length;
-		}
-
-		if (!length || length % 2) {
-			PyErr_SetString(ModuleInvalidFormat, "NewAdvancedVertexArray() ERR 3");
-			return 0;
-		}
-
-		int stride = 0;
-		for (int i = 0; format[i]; i += 2) {
-			stride += (format[i] - '0') * 4;
-		}
-
-		int count = (int)PyList_Size(attributes);
-		if (length / 2 != count) {
-			PyErr_Format(ModuleInvalidFormat, "NewAdvancedVertexArray() ERR 4.");
-			return 0;
-		}
-
-		char * ptr = 0;
-		for (int i = 0; i < count; ++i) {
+	int i = 0;
+	char * ptr = 0;
+	while (FormatNode * node = it.next()) {
+		if (node->type) {
 			const char * name = PyUnicode_AsUTF8(PyList_GET_ITEM(attributes, i));
 			int location = OpenGL::glGetAttribLocation(program->program, name);
-
-			int dimension = format[i * 2] - '0';
-			switch (format[i * 2 + 1]) {
-				case 'f':
-					OpenGL::glVertexAttribPointer(location, dimension, OpenGL::GL_FLOAT, false, stride, ptr);
-					break;
-				case 'i':
-					OpenGL::glVertexAttribPointer(location, dimension, OpenGL::GL_INT, false, stride, ptr);
-					break;
-			}
+			OpenGL::glVertexAttribPointer(location, node->count, node->type, false, info.size, ptr);
 			OpenGL::glEnableVertexAttribArray(location);
-			ptr += dimension * 4;
+			++i;
 		}
+		ptr += node->count * node->size;
 	}
 
 	OpenGL::glBindVertexArray(defaultVertexArray);
@@ -251,11 +284,10 @@ PyObject * DeleteVertexArray(PyObject * self, PyObject * args) {
 PyObject * EnableAttributes(PyObject * self, PyObject * args, PyObject * kwargs) {
 	VertexArray * vao;
 	PyObject * attributes;
-	bool strict = false;
 
-	static const char * kwlist[] = {"vao", "attributes", "strict", 0};
+	static const char * kwlist[] = {"vao", "attributes", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!|p:EnableAttributes", (char **)kwlist, &VertexArrayType, &vao, &PyList_Type, &attributes, &strict)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!|p:EnableAttributes", (char **)kwlist, &VertexArrayType, &vao, &PyList_Type, &attributes)) {
 		return 0;
 	}
 
@@ -263,7 +295,7 @@ PyObject * EnableAttributes(PyObject * self, PyObject * args, PyObject * kwargs)
 	for (int i = 0; i < count; ++i) {
 		const char * name = PyUnicode_AsUTF8(PyList_GET_ITEM(attributes, i));
 		int location = OpenGL::glGetAttribLocation(vao->vao, name);
-		if (strict && location < 0) {
+		if (location < 0) {
 			PyErr_Format(ModuleError, "ERR: 1");
 			return 0;
 		}
@@ -283,11 +315,10 @@ PyObject * EnableAttributes(PyObject * self, PyObject * args, PyObject * kwargs)
 PyObject * DisableAttributes(PyObject * self, PyObject * args, PyObject * kwargs) {
 	VertexArray * vao;
 	PyObject * attributes;
-	bool strict = false;
 
-	static const char * kwlist[] = {"vao", "attributes", "strict", 0};
+	static const char * kwlist[] = {"vao", "attributes", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!|p:DisableAttributes", (char **)kwlist, &VertexArrayType, &vao, &PyList_Type, &attributes, &strict)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!|p:DisableAttributes", (char **)kwlist, &VertexArrayType, &vao, &PyList_Type, &attributes)) {
 		return 0;
 	}
 
@@ -295,7 +326,7 @@ PyObject * DisableAttributes(PyObject * self, PyObject * args, PyObject * kwargs
 	for (int i = 0; i < count; ++i) {
 		const char * name = PyUnicode_AsUTF8(PyList_GET_ITEM(attributes, i));
 		int location = OpenGL::glGetAttribLocation(vao->program, name);
-		if (strict && location < 0) {
+		if (location < 0) {
 			PyErr_Format(ModuleError, "ERR: 1");
 			return 0;
 		}
@@ -378,7 +409,6 @@ PythonMethod VertexArrayMethods[] = {
 		"\tformat (str) Format of the vertex array attrubites. ([1-4][if])+\n"
 		"\tattributes (list) List of vertex attribute names.\n"
 		"\tibo (ModernGL.IndexBuffer) Index of an index buffer object. By default is None\n"
-		"\tstrict (bool) Enable AttributeNotFound error. By default is True\n"
 		"\n"
 
 		"Returns:\n"
@@ -388,7 +418,7 @@ PythonMethod VertexArrayMethods[] = {
 		"Errors:\n"
 		"\t(ModernGL.NotInitialized) The module must be initialized first.\n"
 		"\t(ModernGL.InvalidFormat) The format is invalid or the size of attributes is different.\n"
-		"\t(ModernGL.AttributeNotFound) The attribute is missing (only strict enabled).\n"
+		"\t(ModernGL.AttributeNotFound) The attribute is missing.\n"
 		"\n"
 	},
 	{
@@ -404,7 +434,6 @@ PythonMethod VertexArrayMethods[] = {
 		"\tprogram (ModernGL.Program) A program object that will be used for rendering.\n"
 		"\tcontent (list) List of tuples similar to the ModernGL.NewVertexArray parameters.\n"
 		"\tibo (ModernGL.IndexBuffer) Index of an index buffer object. By default is None\n"
-		"\tstrict (bool) Enable AttributeNotFound error. By default is True\n"
 		"\n"
 
 		"Returns:\n"
@@ -433,6 +462,7 @@ PythonMethod VertexArrayMethods[] = {
 
 		"Errors:\n"
 		"\t(ModernGL.NotInitialized) The module must be initialized first.\n"
+		"\t(ModernGL.AttributeNotFound) The attribute is missing.\n"
 		"\n"
 	},
 	{
@@ -455,6 +485,7 @@ PythonMethod VertexArrayMethods[] = {
 
 		"Errors:\n"
 		"\t(ModernGL.NotInitialized) The module must be initialized first.\n"
+		"\t(ModernGL.AttributeNotFound) The attribute is missing.\n"
 		"\n"
 	},
 	{
