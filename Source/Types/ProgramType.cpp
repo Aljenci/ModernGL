@@ -25,8 +25,11 @@ PyObject * Program_get_item(Program * self, PyObject * key) {
 	return value;
 }
 
+char Program_member_interface_name[] = "interface";
+char Program_member_interface_docs[] = "Program interface";
+
 PyMemberDef Program_members[] = {
-	{"interface", T_OBJECT_EX, offsetof(Program, iface), 0, "Program interface"},
+	{Program_member_interface_name, T_OBJECT_EX, offsetof(Program, iface), 0, Program_member_interface_docs},
 	{0},
 };
 
