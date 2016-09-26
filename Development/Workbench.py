@@ -32,8 +32,10 @@ call pythons setup.py bdist_egg upload
 call pythons setup.py bdist_wininst upload
 '''.strip())
 
-open(os.path.join(project, 'install.bat'), 'w').write('call python setup.py install --record files.txt')
-open(os.path.join(project, 'cmd.bat'), 'w').write('cmd.exe')
+open(os.path.join(project, 'install.bat'), 'w').write('''
+SET CUSTOM_GCC=YES
+call python setup.py install --record files.txt
+'''.strip())
 
 open(os.path.join(project, 'Clean.py'), 'w').write('''
 import shutil, os
