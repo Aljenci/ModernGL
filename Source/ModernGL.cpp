@@ -1,73 +1,39 @@
 #include "ModernGL.hpp"
 
-#include "Types.hpp"
-#include "Errors.hpp"
-#include "Constants.hpp"
-#include "Methods.hpp"
+#include "Events/LoadEvent.hpp"
 
-#include "Utils/OpenGL.hpp"
+#include "Parts/Methods.hpp"
+#include "Parts/Errors.hpp"
+#include "Parts/Types.hpp"
+#include "Parts/Constants.hpp"
 
-bool initialized;
+PyObject * module;
 
-int defaultTextureUnit;
-int defaultVertexArray;
+extern "C" PyObject * PyInit_ModernGL();
 
-int versionNumber;
+PyModuleDef moduledef = {PyModuleDef_HEAD_INIT, "ModernGL", 0, -1, methods, 0, 0, 0, 0};
 
-int maxTextureUnits;
+PyObject * PyInit_ModernGL() {
+	SendLoadEvent();
 
-bool PreInitModule() {
-	if (!TypeReadyCheck()) {
-		return false;
-	}
-
-	InitMethods();
-
-	return true;
-}
-
-PyObject * InitModule(PyObject * module) {
+	module = PyModule_Create(&moduledef);
+	
 	if (!module) {
-		return module;
+		PyErr_SetString(PyExc_ImportError, "cannot import module");
+		return 0;
 	}
 
-	RegisterErrors(module);
-	RegisterTypes(module);
-	RegisterConstants(module);
+	if (!RegisterErrors(module)) {
+		return 0;
+	}
+	
+	if (!RegisterTypes(module)) {
+		return 0;
+	}
+
+	if (!RegisterConstants(module)) {
+		return 0;
+	}
 
 	return module;
 }
-
-#if PY_MAJOR_VERSION >= 3
-
-static struct PyModuleDef moduledef = {PyModuleDef_HEAD_INIT, "ModernGL", 0, -1, moduleMethod, 0, 0, 0, 0};
-
-extern "C" {
-	PyObject * PyInit_ModernGL();
-}
-
-PyObject * PyInit_ModernGL() {
-	if (!PreInitModule()) {
-		PyErr_SetString(PyExc_ImportError, "cannot import module");
-		return 0;
-	}
-
-	return InitModule(PyModule_Create(&moduledef));
-}
-
-#else
-
-extern "C" {
-	PyObject * initModernGL();
-}
-
-PyObject * initModernGL() {
-	if (!PreInitModule()) {
-		PyErr_SetString(PyExc_ImportError, "cannot import module");
-		return 0;
-	}
-
-	return InitModule(Py_InitModule("ModernGL", methods));
-}
-
-#endif

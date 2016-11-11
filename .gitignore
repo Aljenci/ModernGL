@@ -11,11 +11,4 @@ log.txt
 files.txt
 MANIFEST
 
-multi_upload.bat
-multi_install.bat
-install.bat
-cmd.bat
-Clean.py
-
 **/Makefile
-!Development/**/Makefile
