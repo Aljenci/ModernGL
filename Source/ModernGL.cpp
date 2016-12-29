@@ -35,5 +35,6 @@ PyObject * PyInit_ModernGL() {
 		return 0;
 	}
 
+
 	return module;
 }

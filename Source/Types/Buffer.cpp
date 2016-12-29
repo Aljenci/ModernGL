@@ -12,13 +12,12 @@ namespace {
 	}
 
 	int Buffer_init(Buffer * self, PyObject * args, PyObject * kwargs) {
-		static const char * kwlist[] = {"data", "reserve", "generate", "dynamic", 0};
+		static const char * kwlist[] = {"data", "reserve", "dynamic", 0};
 
 		const char * data = 0;
 		int size = 0;
 		int reserve = 0;
 		bool dynamic = false;
-		
 
 		if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y#$Ip:Buffer", (char **)kwlist, &data, &size, &reserve, &dynamic)) {
 			return -1;
@@ -81,7 +80,7 @@ namespace {
 		int size = 0;
 		int offset = 0;
 
-		if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#|$I:Buffer", (char **)kwlist, &data, &size, &offset)) {
+		if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#|$I:write", (char **)kwlist, &data, &size, &offset)) {
 			return 0;
 		}
 

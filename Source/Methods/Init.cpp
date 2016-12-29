@@ -46,6 +46,21 @@ namespace {
 			return 0;
 		}
 
+		OpenGL::glBlendFunc(OpenGL::GL_SRC_ALPHA, OpenGL::GL_ONE_MINUS_SRC_ALPHA);
+
+		if (glver >= OPENGL_430) {
+			OpenGL::glEnable(OpenGL::GL_PRIMITIVE_RESTART_FIXED_INDEX);
+		} else {
+			OpenGL::glEnable(OpenGL::GL_PRIMITIVE_RESTART);
+			OpenGL::glPrimitiveRestartIndex(-1);
+		}
+
+		// OpenGL::glGenVertexArrays(1, (OpenGL::GLuint *)&defaultVertexArray);
+		// OpenGL::glBindVertexArray(defaultVertexArray);
+
+		// OpenGL::glGetIntegerv(OpenGL::GL_MAX_TEXTURE_IMAGE_UNITS, (OpenGL::GLint *)&maxTextureUnits);
+		// defaultTextureUnit = maxTextureUnits - 1;
+
 		SendVersionChangeEvent(glver);
 
 		Py_RETURN_NONE;

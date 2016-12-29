@@ -97,7 +97,7 @@ namespace {
 			}
 
 			int buf_vertices = vbo->size / format_info.size;
-			if (!indices && (!i || self->vertices > buf_vertices)) {
+			if (!format_info.per_instance && !indices && (!i || self->vertices > buf_vertices)) {
 				self->vertices = buf_vertices;
 			}
 
@@ -131,6 +131,7 @@ namespace {
 					OpenGL::glVertexAttribIPointer(location, node->count, node->type, format_info.size, ptr);
 				} else {
 					OpenGL::glVertexAttribPointer(location, node->count, node->type, false, format_info.size, ptr);
+					// printf("[%d] %s %d %d %d %p\n", vbo->obj, attrib, location, node->count, format_info.size, ptr);
 				}
 
 				if (format_info.per_instance) {

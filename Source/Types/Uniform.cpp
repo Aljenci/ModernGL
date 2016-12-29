@@ -43,6 +43,7 @@ namespace {
 		{(char *)"name", (getter)Uniform_get_name, 0, 0, 0},
 		{(char *)"location", (getter)Uniform_get_location, 0, 0, 0},
 		{(char *)"value", (getter)Uniform_get_value, (setter)Uniform_set_value, 0, 0},
+		{0},
 	};
 
 	PyObject * Uniform_read(Uniform * self) {

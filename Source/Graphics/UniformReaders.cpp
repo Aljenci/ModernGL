@@ -412,11 +412,23 @@ PyObject * Uniform_dvec4_array_value_reader(Uniform * self) {
 }
 
 PyObject * Uniform_sampler_value_reader(Uniform * self) {
-	return 0;
+	int value = 0;
+	OpenGL::glGetUniformiv(self->program, self->location, &value);
+	return PyBytes_FromStringAndSize((const char *)&value, sizeof(int));
 }
 
 PyObject * Uniform_sampler_array_value_reader(Uniform * self) {
-	return 0;
+	int size = self->info.array_len;
+
+	PyObject * result = PyBytes_FromStringAndSize(0, size * sizeof(int));
+	int * values = (int *)PyBytes_AS_STRING(result);
+
+	for (int i = 0; i < size; ++i) {
+		OpenGL::glGetUniformiv(self->program, self->location + i, values);
+		values += 1;
+	}
+
+	return result;
 }
 
 PyObject * Uniform_float_matrix_2x2_value_reader(Uniform * self) {

@@ -31,7 +31,7 @@ print(prog['A'].value)
 print(prog['B'].value)
 print(prog['C'].value)
 
-prog['s1'].value = [5] * 16
+prog['s1'].value = [i for i in range(16)]
 prog['xyz'].value = [
 	(
 		1, 0, 0, 0,

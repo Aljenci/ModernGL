@@ -71,5 +71,10 @@ bool RegisterConstants(PyObject * module) {
 	TRIANGLES_ADJACENCY->transform_primitive = OpenGL::GL_TRIANGLES;
 	PyModule_AddObject(module, "TRIANGLES_ADJACENCY", (PyObject *)TRIANGLES_ADJACENCY);
 
+	PyModule_AddObject(module, "BLEND", PyLong_FromLong(OpenGL::GL_BLEND));
+	PyModule_AddObject(module, "CULL_FACE", PyLong_FromLong(OpenGL::GL_CULL_FACE));
+	PyModule_AddObject(module, "DEPTH_TEST", PyLong_FromLong(OpenGL::GL_DEPTH_TEST));
+	PyModule_AddObject(module, "MULTISAMPLE", PyLong_FromLong(OpenGL::GL_MULTISAMPLE));
+
 	return true;
 }

@@ -25,6 +25,8 @@ namespace {
 			methods[i].ml_meth = moduleMethods[i].meth[OPENGL_UNK];
 			methods[i].ml_flags = moduleMethods[i].flags;
 			methods[i].ml_doc = (char *)moduleMethods[i].doc;
+
+			// printf("%s ready\n", moduleMethods[i].name);
 		}
 
 		methods[num_methods].ml_name = 0;

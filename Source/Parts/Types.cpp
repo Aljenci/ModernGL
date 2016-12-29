@@ -13,6 +13,7 @@ bool RegisterTypes(PyObject * module) {
 		if (PyType_Ready(types[i].type) < 0) {
 			return false;
 		}
+		// printf("%s ready\n", types[i].name);
 	}
 
 	for (int i = 0; i < num_types; ++i) {
