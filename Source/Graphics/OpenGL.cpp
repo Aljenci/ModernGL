@@ -5234,6 +5234,10 @@ namespace OpenGL {
 	PROC_glTextureBarrier glTextureBarrier;
 	#endif
 
+	#ifdef HAVING_glSwapInterval
+	PROC_glSwapInterval glSwapInterval;
+	#endif
+
 
 }
 
@@ -5272,6 +5276,7 @@ namespace OpenGL {
 		if (!OpenGL::wglGetProcAddress) {
 			return false;
 		}
+
 		OpenGL::wglGetCurrentContext = (PROC_wglGetCurrentContext)GetProcAddress(opengl32, "wglGetCurrentContext");
 
 		if (!OpenGL::wglGetCurrentContext) {
@@ -5285,6 +5290,8 @@ namespace OpenGL {
 		if (!LoadCoreOpenGLFunctions()) {
 			return false;
 		}
+		
+		OpenGL::glSwapInterval = (PROC_glSwapInterval)GetProcAddress(opengl32, "wglSwapIntervalEXT");
 
 		return true;
 	}

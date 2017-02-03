@@ -78,7 +78,7 @@ namespace {
 				return -1;
 			}
 
-			int format_len = 0;
+			Py_ssize_t format_len = 0;
 			char * format = PyUnicode_AsUTF8AndSize(PyTuple_GET_ITEM(tuple, 1), &format_len);
 
 			if (!format || !format_len) {

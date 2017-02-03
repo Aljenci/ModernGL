@@ -167,9 +167,7 @@ namespace {
 			return -1;
 		}
 
-		// it->second;
-
-		return 0;
+		return it->second->setter(it->second, value);
 	}
 
 	PyMappingMethods Program_map = {

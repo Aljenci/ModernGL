@@ -654,6 +654,7 @@
 #define HAVING_glViewportIndexedf
 #define HAVING_glViewportIndexedfv
 #define HAVING_glWaitSync
+#define HAVING_glSwapInterval
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -4653,6 +4654,10 @@ namespace OpenGL {
 	typedef GLvoid (GLAPI * PROC_glTextureBarrier)();
 	#endif
 
+	#ifdef HAVING_glSwapInterval
+	typedef int (__stdcall * PROC_glSwapInterval)(int interval);
+	#endif
+
 
 	#ifdef HAVING_glCullFace
 	extern PROC_glCullFace glCullFace;
@@ -7266,6 +7271,9 @@ namespace OpenGL {
 	extern PROC_glTextureBarrier glTextureBarrier;
 	#endif
 
+	#ifdef HAVING_glSwapInterval
+	extern PROC_glSwapInterval glSwapInterval;
+	#endif
 }
 
 #undef GLAPI
